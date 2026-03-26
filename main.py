@@ -17,7 +17,7 @@ from glob import glob
 主_庫存欄 = "et_title_variation_stock"
 
 # 異常補貨警示門檻（單一商品規格退貨數量超過此值會提醒人工確認）
-WARNING_THRESHOLD = 15
+WARNING_THRESHOLD = 20
 # ===========================================
 
 # ---- 解析命令列參數 ----
