@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Excel 檔案 (排除資料夾內的資料)
+主庫存/*.xlsx
+主庫存/*.xls
+退貨單/*.xlsx
+退貨單/*.xls
+
+# 根目錄下的暫存或測試檔案
+*.xlsx
+*.xls
+~$*
+
+# macOS
+.DS_Store
