@@ -23,9 +23,27 @@ WARNING_THRESHOLD = 20
 # ---- 解析命令列參數 ----
 DRY_RUN = "--dry-run" in sys.argv
 
+# ---- 日誌功能 (僅在 Dry-Run 時啟用) ----
 if DRY_RUN:
+    class Logger(object):
+        def __init__(self, filename="dry_run_log.txt"):
+            self.terminal = sys.stdout
+            self.log = open(filename, "w", encoding="utf-8")
+
+        def write(self, message):
+            self.terminal.write(message)
+            self.log.write(message)
+            self.log.flush()
+
+        def flush(self):
+            # 為了相容性需要實作 flush
+            self.terminal.flush()
+            pass
+
+    sys.stdout = Logger()
     print("=" * 55)
     print("  ⚠️  DRY-RUN 預覽模式（不會產生任何輸出檔案）")
+    print(f"  📝 完整紀錄將同步存於: dry_run_log.txt")
     print("=" * 55)
 print("=== 蝦皮退貨補庫存工具開始執行 ===\n")
 
