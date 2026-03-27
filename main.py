@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import sys
+import hashlib
 from glob import glob
 
 # ================== 設定區 ==================
@@ -56,6 +57,26 @@ all_returns = pd.DataFrame()
 
 退貨檔案列表 = glob(os.path.join(退貨資料夾, "*.xlsx")) + glob(os.path.join(退貨資料夾, "*.xls"))
 
+# ---- 安全檢查：偵測完全相同的檔案（防止重複匯入同一份報表）----
+def _file_md5(path):
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+hash_map = {}  # hash -> 第一個檔名
+for f in 退貨檔案列表:
+    檔名 = os.path.basename(f)
+    if 檔名.startswith('~$'):
+        continue
+    fhash = _file_md5(f)
+    if fhash in hash_map:
+        print(f"❌ 【危險：檔案重複】{檔名} 與 {hash_map[fhash]} 內容完全相同！")
+        print(f"   請從退貨單資料夾移除其中一份，否則退貨數量會被重複計算！")
+    else:
+        hash_map[fhash] = 檔名
+
 for f in 退貨檔案列表:
     檔名 = os.path.basename(f)
     if 檔名.startswith('~$'):
@@ -64,15 +85,6 @@ for f in 退貨檔案列表:
     try:
         df = pd.read_excel(f, engine='openpyxl')
         df["__來源檔案__"] = 檔名  # 記錄來源，方便追蹤
-
-        # ---- 安全檢查：同一份退貨單內是否有重複的商品ID+規格ID ----
-        df_id = df[[退貨_商品ID欄, 退貨_規格ID欄]].astype(str).apply(lambda c: c.str.strip())
-        重複筆 = df_id[df_id.duplicated(keep=False)]
-        if not 重複筆.empty:
-            print(f"⚠️  【重複警告】檔案 {檔名} 內有重複的商品ID+規格ID組合：")
-            for _, row in 重複筆.drop_duplicates().iterrows():
-                print(f"   → 商品ID: {row[退貨_商品ID欄]} | 規格ID: {row[退貨_規格ID欄]}")
-            print("   請確認是否重複匯入同一份退貨單！\n")
 
         all_returns = pd.concat([all_returns, df], ignore_index=True)
         已讀取檔案.append(檔名)
